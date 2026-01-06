@@ -1,0 +1,1066 @@
+# GLOBAL CARGO VERİTABANI - GEREKSİNİM ANALİZİ
+## Veri Modeli ve Varlık İlişkilerine Göre Düzenlenmiş Gereksinimler
+
+---
+
+## I. TEMEL VERİ YÖNETİMİ
+
+Gereksinim 1
+Açıklama: Kargo takip sistemi bulunmalı, kullanıcılar gönderilerini gerçek zamanlı olarak takip edebilmelidir.
+Veri Modeli ve İlişki Notu: cargo (ana tablo), tracking_number (benzersiz), cargo_state_history (1-N), cargo_movement_history (1-N) ilişkileri zorunludur.
+
+Gereksinim 2
+Açıklama: Kullanıcı, bir kargo gönderimi içinde en az bir ürün tanımlayabilmelidir.
+Veri Modeli ve İlişki Notu: product tablosu cargo tablosuna cargo_id Yabancı Anahtar (FK) ile bağlı olmalıdır (1-N ilişki).
+
+Gereksinim 3
+Açıklama: Kullanıcı kargo gönderimini online olarak; kredi kartı, banka kartı veya kapıda ödeme yöntemleriyle ücretini ödeyerek teslim alabilmeli.
+Veri Modeli ve İlişki Notu: payment tablosu payment_method_enum FK ile, invoice > cargo ilişkisi.
+
+Gereksinim 4
+Açıklama: Bir kullanıcı için en fazla bir kayıt ve kimlik doğrulama sistemi olmalı.
+Veri Modeli ve İlişki Notu: customer tablosu actor_id UNIQUE FK ile actor tablosuna bağlı (1-1 ilişki).
+
+Gereksinim 5
+Açıklama: Bir müşteri en fazla 5 kargoyu tek siparişte göndermeli.
+Veri Modeli ve İlişki Notu: product tablosunda cargo_id FK ile, trigger ile max 5 ürün kontrolü.
+
+Gereksinim 6
+Açıklama: Kargonun niteliği kırılabilir, tehlikeli madde veya hassas olarak sistemde ön tanımlı seçenekler arasından seçilmeli.
+Veri Modeli ve İlişki Notu: cargo tablosu cargo_type_id FK ile cargo_type_enum tablosuna bağlı.
+
+Gereksinim 7
+Açıklama: Bir ürünün en fazla bir ürün-ID'si olmalı.
+Veri Modeli ve İlişki Notu: product tablosunda product_code UNIQUE constraint.
+
+Gereksinim 8
+Açıklama: Bir kargonun en fazla 1 ID'si ve takip numarası olmalı.
+Veri Modeli ve İlişki Notu: cargo tablosunda id PRIMARY KEY, tracking_number UNIQUE.
+
+Gereksinim 9
+Açıklama: Tracking No (takip numarası) ve Delivery No (teslimat onayı kodu) birbirinden bağımsız olarak tutulmalı.
+Veri Modeli ve İlişki Notu: cargo tablosunda tracking_number ve delivery_number ayrı UNIQUE kolonlar.
+
+Gereksinim 10
+Açıklama: Bir kargo için en fazla 1 iade talep sistemi bulunmalı.
+Veri Modeli ve İlişki Notu: cargo_return_request tablosu cargo_id UNIQUE FK ile cargo tablosuna bağlı (1-1 ilişki).
+
+Gereksinim 11
+Açıklama: Teslim alınmayan kargolar için sistem, tanımlı zaman eşiği aşıldığında otomatik iptal veya iade süreci başlatılmalı.
+Veri Modeli ve İlişki Notu: cargo tablosunda undelivered_cancel_threshold_hours, is_auto_cancelled, auto_cancel_date alanları.
+
+Gereksinim 12
+Açıklama: Teslimat süresi, hatalar ve hasar gibi durumlarda olayı tanımlayan en az 1 otomatik olay kaydı sistemde oluşturulmalı.
+Veri Modeli ve İlişki Notu: cargo_event_log tablosu cargo_id FK ile, trigger ile otomatik event_time atanması.
+
+Gereksinim 13
+Açıklama: Bir kullanıcı kargosunun hasar durumunu en fazla bir arayüzden sorgulamalı.
+Veri Modeli ve İlişki Notu: cargo_damage_report tablosu cargo_id UNIQUE FK ile cargo tablosuna bağlı (1-1 ilişki).
+
+Gereksinim 14
+Açıklama: Kargonun niteliği; kırılabilir, tehlikeli madde ya da hassas olarak sistemde en az biri seçilebilmeli.
+Veri Modeli ve İlişki Notu: cargo tablosu cargo_type_id NOT NULL FK ile cargo_type_enum tablosuna bağlı.
+
+Gereksinim 15
+Açıklama: Bir kargo için en fazla bir tahmini teslim süresi değeri sistemde tutulmalı.
+Veri Modeli ve İlişki Notu: cargo tablosunda estimated_delivery_date kolonu (tek değer).
+
+Gereksinim 16
+Açıklama: Tahmini teslim süresi sistem tarafından müşterinin siparişinden 12 saat sonra hesaplanmalı ve gösterilmeli.
+Veri Modeli ve İlişki Notu: cargo tablosunda estimated_delivery_date, origin_date ile hesaplanır.
+
+Gereksinim 17
+Açıklama: Bir kargonun en fazla 1 çıkış noktası, varış noktası, çıkış tarihi ve tahmini varış tarihi olmalı.
+Veri Modeli ve İlişki Notu: cargo tablosunda origin_branch_id, destination_branch_id, origin_date, estimated_delivery_date kolonları.
+
+Gereksinim 18
+Açıklama: Ülke > Bölge > İl > İlçe > Şube şeklinde hiyerarşik lokasyon yapısı olmalı.
+Veri Modeli ve İlişki Notu: country > region > city > district > branch FK chain ilişkisi.
+
+Gereksinim 19
+Açıklama: Sistem, uluslararası kargo gönderilerini ülke bilgileriyle ilişkilendirebilecek şekilde yönetebilmeli.
+Veri Modeli ve İlişki Notu: cargo tablosunda origin_country_id ve destination_country_id FK'ları country tablosuna.
+
+Gereksinim 20
+Açıklama: Yurt içi ve yurt dışı dağıtım araçları ile ulaşım rotaları sistemde yönetilebilir olmalı.
+Veri Modeli ve İlişki Notu: route tablosu distribution_center tablosu ile ilişkili, vehicle_route ile araç rotası yönetimi.
+
+---
+
+## II. DAĞITIM VE ROTA YÖNETİMİ
+
+Gereksinim 21
+Açıklama: Dağıtım noktaları / transfer merkezleri sistemde tanımlı olmalı.
+Veri Modeli ve İlişki Notu: distribution_center tablosu country_id ve city_id FK'ları ile.
+
+Gereksinim 22
+Açıklama: Bir dağıtım personelinin en az bir güzergah planlaması olmalı.
+Veri Modeli ve İlişki Notu: courier_route_plan tablosu employee_id FK ile employee tablosuna bağlı.
+
+Gereksinim 23
+Açıklama: Bir kargo için en az bir gönderim tipi; kara, hava veya deniz olarak seçilebilir olmalı.
+Veri Modeli ve İlişki Notu: cargo tablosu shipment_type_id NOT NULL FK ile shipment_type_enum tablosuna bağlı.
+
+Gereksinim 24
+Açıklama: Bir kullanıcı, kapıya bırakma, komşuya teslim ve imza zorunlu teslimat tercihlerinden en az birini seçmeli.
+Veri Modeli ve İlişki Notu: cargo_delivery_preference tablosu cargo_id ve delivery_option_id FK'ları ile.
+
+Gereksinim 25
+Açıklama: Kargo gönderimi yapıldığında, bir kargo için en fazla bir ana fatura oluşturulmalı.
+Veri Modeli ve İlişki Notu: invoice tablosu cargo_id FK ile cargo tablosuna bağlı, is_main_invoice boolean alanı.
+
+Gereksinim 26
+Açıklama: Kargo gönderimi yapıldığında, gerekli durumlarda ek (gümrük veya vergi) faturaları sistemde ayrıca ilişkilendirilerek kayıt altına alınmalı.
+Veri Modeli ve İlişki Notu: invoice tablosunda is_additional_invoice boolean, invoice_type ile fatura türü ayrımı.
+
+Gereksinim 27
+Açıklama: Faturalandırma işlemleri en az bir bağımsız tabloda tutulmalı ve diğer operasyonel tablolardan ilişkilendirilerek yönetilmeli.
+Veri Modeli ve İlişki Notu: invoice tablosu bağımsız, cargo_id FK ile cargo tablosuna bağlı.
+
+Gereksinim 28
+Açıklama: Gümrük vergisi, KDV ve uluslararası ek vergiler; ülke, ürün değeri ve taşıma türü bilgilerine göre sistem tarafından otomatik hesaplanmalı.
+Veri Modeli ve İlişki Notu: customs_tax_calculation tablosu cargo_id, country_id, shipment_type_id FK'ları ile.
+
+Gereksinim 29
+Açıklama: Yurt dışı gönderilerde gümrük yönetimi modülü bulunmalı.
+Veri Modeli ve İlişki Notu: customs_document_type, cargo_customs_document, customs_tax_calculation tabloları ile.
+
+Gereksinim 30
+Açıklama: Gümrük işlemleri için gerekli belgeler ve sertifikalar sistem tarafından listelenmeli ve yönetilebilmeli.
+Veri Modeli ve İlişki Notu: customs_document_type tablosu lookup, cargo_customs_document tablosu cargo_id FK ile (one-to-many).
+
+Gereksinim 31
+Açıklama: Erişimi kısıtlı hedef ülkeler için sistem, tanımlı rota kurallarına göre alternatif transfer ülkesi önerisi sunmalı.
+Veri Modeli ve İlişki Notu: route tablosunda is_alternative_route, main_route_id FK ile alternatif rota yönetimi.
+
+---
+
+## III. ÖDEME VE FİYATLANDIRMA
+
+Gereksinim 32
+Açıklama: Bir çalışanın en fazla 1 kurumsal kimlik numarası (personel ID / sicil no) olmalı.
+Veri Modeli ve İlişki Notu: employee tablosunda employee_number UNIQUE constraint.
+
+Gereksinim 33
+Açıklama: Her çalışanın en az 1 rolü olmalı.
+Veri Modeli ve İlişki Notu: employee_role tablosu employee_id FK ile employee tablosuna bağlı (1-N ilişki).
+
+Gereksinim 34
+Açıklama: Bir kargo çalışanı rolüne göre en az 1 arayüze sahip olmalı.
+Veri Modeli ve İlişki Notu: employee_role > role > role_permission > permission (RBAC zinciri).
+
+Gereksinim 35
+Açıklama: Personel maaş ve bordro yönetim sistemi bulunmalı.
+Veri Modeli ve İlişki Notu: employee_salary tablosu employee_id FK ile employee tablosuna bağlı.
+
+Gereksinim 36
+Açıklama: Sistem, çalışanların izin ve tatil taleplerini kaydetmeli, onay süreciyle yönetmeli.
+Veri Modeli ve İlişki Notu: employee_leave_request tablosu employee_id FK ile, approver_id FK ile onay süreci.
+
+Gereksinim 37
+Açıklama: Performansa göre ödüllendirme sistemi (prim/bonus) tanımlanmalı.
+Veri Modeli ve İlişki Notu: employee_performance_reward tablosu employee_id FK ile employee tablosuna bağlı.
+
+Gereksinim 38
+Açıklama: Bir müşteri hizmetleri personeli için en az bir eğitim seviyesi ve yetkinlik kriteri tanımlı olmalı.
+Veri Modeli ve İlişki Notu: employee_training tablosu employee_id FK ile employee tablosuna bağlı.
+
+Gereksinim 39
+Açıklama: Sistem, günlük kargo sayısı, yoğun rota ve hasar oranı gibi metrikleri içeren dinamik raporlama ve analiz modülü sağlamalı.
+Veri Modeli ve İlişki Notu: cargo_analytics tablosu cargo_id FK ile, time_series_data tablosu ile zaman serisi analizi.
+
+Gereksinim 40
+Açıklama: Bir kargonun ulaşım aksaklığı gibi durumlarda otomatik ücret iade protokolü tanımlı olmalı.
+Veri Modeli ve İlişki Notu: payment_refund tablosu payment_id FK ile payment tablosuna bağlı.
+
+Gereksinim 41
+Açıklama: Bir kargo için değer beyanı sistemi olmalı ve bu değere göre sigorta uygulanmalı.
+Veri Modeli ve İlişki Notu: cargo tablosunda value_declaration kolonu, cargo_insurance tablosu cargo_id UNIQUE FK ile (1-1 ilişki).
+
+Gereksinim 42
+Açıklama: Kullanıcı, ulaşım yöntemi seçerek (hava, kara, express) ücret farkını görebilmeli.
+Veri Modeli ve İlişki Notu: pricing_calculation tablosu shipment_type_id FK ile shipment_type_enum tablosuna bağlı.
+
+Gereksinim 43
+Açıklama: Özel kurum anlaşmaları (ör: Ege Üniversitesi anlaşmalı indirim) sistem tarafından otomatik uygulanmalı.
+Veri Modeli ve İlişki Notu: institution_agreement tablosu lookup, invoice tablosu institution_agreement_id FK ile.
+
+Gereksinim 44
+Açıklama: Sistem, kargo hareket geçmişini (tarih, durum, konum ve açıklama bilgileri) kayıt altına alarak kullanıcıya görüntüleyebilmeli.
+Veri Modeli ve İlişki Notu: cargo_movement_history tablosu cargo_id FK ile cargo tablosuna bağlı, branch_id veya distribution_center_id ile konum.
+
+Gereksinim 45
+Açıklama: Her fatura kaydı en az bir ödeme işlemine bağlı olmalı.
+Veri Modeli ve İlişki Notu: payment tablosu invoice_id FK ile invoice tablosuna bağlı (1-N ilişki: invoice > payment).
+
+Gereksinim 46
+Açıklama: Bir ödeme işlemi en az bir kargo gönderimiyle ilişkilendirilmeli.
+Veri Modeli ve İlişki Notu: payment tablosu cargo_id NOT NULL FK ile cargo tablosuna bağlı.
+
+Gereksinim 47
+Açıklama: Bir kargo gönderimine ait ödeme kaydı en az bir onay durumuna sahip olmalı.
+Veri Modeli ve İlişki Notu: payment tablosunda approval_status, payment_status_id FK ile payment_status_enum tablosuna bağlı.
+
+---
+
+## IV. MÜŞTERI DESTEK VE ARŞİVLEME
+
+Gereksinim 48
+Açıklama: Her müşteri destek talebi en fazla bir kargo gönderimiyle ilişkilendirilmeli.
+Veri Modeli ve İlişki Notu: customer_support_request tablosu cargo_id nullable FK ile cargo tablosuna bağlı, partial unique index ile max 1 constraint.
+
+Gereksinim 49
+Açıklama: Bir müşteri destek talebi en az bir çözüm kaydı veya yanıt içermeli.
+Veri Modeli ve İlişki Notu: customer_support_response tablosu support_request_id FK ile customer_support_request tablosuna bağlı (1-N ilişki).
+
+Gereksinim 50
+Açıklama: Her sistem arşiv kaydı en fazla bir fatura, ödeme veya destek talebiyle ilişkilendirilmeli.
+Veri Modeli ve İlişki Notu: archive tablosu source_table_name, source_record_id, archive_type ile genel arşiv yapısı.
+
+Gereksinim 51
+Açıklama: Tüm tarih ve zaman alanları UTC formatında saklanmalı ve DB'de tek tip zaman standardı uygulanmalıdır.
+Veri Modeli ve İlişki Notu: Tüm tablolarda TIMESTAMP WITH TIME ZONE kullanımı.
+
+Gereksinim 52
+Açıklama: Sistem state değişikliklerini cargo_state_history tablosunda loglamalı ve her state değişikliği insert mantığıyla saklanmalıdır (update ile state overwrite edilmemeli).
+Veri Modeli ve İlişki Notu: cargo_state_history tablosu cargo_id FK ile, trigger ile UPDATE/DELETE yasaklama.
+
+Gereksinim 53
+Açıklama: Kargo state tipleri STATE ENUM tablosu üzerinden yönetilir olmalı (ör: created / customs review / transit / delayed / delivered / returned / cancelled).
+Veri Modeli ve İlişki Notu: cargo_state_history tablosu state_id FK ile state_enum tablosuna bağlı.
+
+Gereksinim 54
+Açıklama: Partner API konfigürasyon tanımları partner_config tablosunda saklanmalı ve partner country mapping foreign key ile bağlanmalıdır.
+Veri Modeli ve İlişki Notu: partner_config tablosu partner_id FK ile partner tablosuna, country_id FK ile country tablosuna bağlı.
+
+Gereksinim 55
+Açıklama: Fiyatlandırma hesaplaması sonucunda oluşan maliyet hesap detayları pricing_calculation_detail tablosunda saklanmalıdır.
+Veri Modeli ve İlişki Notu: pricing_calculation_detail tablosu pricing_calculation_id FK ile pricing_calculation tablosuna bağlı (1-N ilişki).
+
+Gereksinim 56
+Açıklama: Ülkelere göre risk seviyeleri country_risk tablosunda tutulmalı ve gümrük vergisi hesaplamasında constraint olarak kullanılmalıdır.
+Veri Modeli ve İlişki Notu: country_risk tablosu country_id UNIQUE FK ile country tablosuna bağlı (1-1 ilişki), customs_tax_calculation tablosunda constraint.
+
+Gereksinim 57
+Açıklama: Gümrük için gerekli belge tipleri customs_document_type tablosunda saklanmalı ve cargo_customs_document tablosunda cargo_id ile işlenmelidir (one-to-many).
+Veri Modeli ve İlişki Notu: cargo_customs_document tablosu cargo_id FK ile cargo tablosuna, customs_document_type_id FK ile customs_document_type tablosuna bağlı.
+
+Gereksinim 58
+Açıklama: Karbon ayak izi hesaplama değerleri cargo_carbon_data tablosunda cargo_id bazlı tekil kayıt olarak saklanmalıdır.
+Veri Modeli ve İlişki Notu: cargo_carbon_data tablosu cargo_id UNIQUE FK ile cargo tablosuna bağlı (1-1 ilişki).
+
+---
+
+## V. İNSAN KAYNAKLARI VE PERFORMANS
+
+Gereksinim 59
+Açıklama: Performans, prim, bonus, KPI değerleri HR_KPI tablolarında saklanmalı ve personel_id üzerinden ilişkilendirilmelidir.
+Veri Modeli ve İlişki Notu: hr_kpi tablosu employee_id FK ile employee tablosuna bağlı.
+
+Gereksinim 60
+Açıklama: Lokasyon hiyerarşisi (Country > Region > City > District > Branch) her bir seviye için ayrı tablo ve FK chain ile modellenmelidir.
+Veri Modeli ve İlişki Notu: country > region > city > district > branch FK zinciri.
+
+Gereksinim 61
+Açıklama: Dağıtım merkezleri / transfer noktaları ayrı distribution_center tablosunda tutulmalı ve rotalar route table üzerinden center-to-center ilişkili saklanmalıdır.
+Veri Modeli ve İlişki Notu: route tablosu origin_distribution_center_id ve destination_distribution_center_id FK'ları ile distribution_center tablosuna bağlı.
+
+Gereksinim 62
+Açıklama: Gönderim türleri (land, air, sea, express) shipment_type ENUM tablosunda saklanmalıdır ve cargo tablosunda FK olarak tutulmalıdır.
+Veri Modeli ve İlişki Notu: cargo tablosu shipment_type_id FK ile shipment_type_enum tablosuna bağlı.
+
+Gereksinim 63
+Açıklama: Teslim türleri (door, neighbor, signature) delivery_option ENUM tablosunda saklanmalıdır ve cargo_delivery_preference tablosunda cargo_id ile bağlanmalıdır.
+Veri Modeli ve İlişki Notu: cargo_delivery_preference tablosu delivery_option_id FK ile delivery_option_enum tablosuna bağlı.
+
+Gereksinim 64
+Açıklama: Ödemeler ve faturalar arasında bire çok ilişki (invoice > payment) constraint ile enforced olmalıdır.
+Veri Modeli ve İlişki Notu: payment tablosu invoice_id NOT NULL FK ile invoice tablosuna bağlı (1-N: invoice > payment).
+
+Gereksinim 65
+Açıklama: Sigorta değeri cargo_insurance tablosunda cargo_id bazlı tutulmalı ve sigorta poliçe hesaplamaları audit amaçlı değiştirilemez formatta archive olmalıdır.
+Veri Modeli ve İlişki Notu: cargo_insurance tablosu cargo_id UNIQUE FK ile cargo tablosuna bağlı (1-1 ilişki), trigger ile UPDATE/DELETE yasaklama.
+
+Gereksinim 66
+Açıklama: Her cargo event log insert edildiğinde trigger ile event_time otomatik üretilmelidir (client insert timestamp override edilmemeli).
+Veri Modeli ve İlişki Notu: cargo_event_log tablosunda trigger ile otomatik event_time atanması.
+
+Gereksinim 67
+Açıklama: Value Based Pricing için ürün değerleri product_value_history tablosunda saklanmalı ve faturalandırmada geçmiş değere göre hesap yapılabilmelidir.
+Veri Modeli ve İlişki Notu: product_value_history tablosu product_id FK ile product tablosuna bağlı.
+
+Gereksinim 68
+Açıklama: Tüm transaction'lar ACID garanti eden transaction block mantığında işlenmelidir (DB level constraint).
+Veri Modeli ve İlişki Notu: PostgreSQL transaction block desteği, tüm FK constraint'ler ile veri bütünlüğü.
+
+---
+
+## VI. VERİ BÜTÜNLÜĞÜ VE STANDARTLAR
+
+Gereksinim 69
+Açıklama: Tüm FK ilişkilerde ON DELETE davranışı iş kuralına göre zorunlu olarak tanımlanmalı (restrict, cascade, set null) ve sistemde "uncontrolled orphan record" kalmasına izin verilmemeli.
+Veri Modeli ve İlişki Notu: Tüm foreign key'lerde ON DELETE RESTRICT/CASCADE/SET NULL ve ON UPDATE CASCADE tanımlı.
+
+Gereksinim 70
+Açıklama: Anahtar tablolarda UUID + Increment Numeric ID ikili kimlik standardı uygulanmalı; global sistemlerde partner mapping için UUID zorunlu olmalı.
+Veri Modeli ve İlişki Notu: cargo, customer, employee, partner, invoice, payment gibi ana tablolarda hem id (SERIAL) hem uuid (UUID) mevcut.
+
+Gereksinim 71
+Açıklama: Tüm ENUM değerleri ayrı lookup tabloları ile yönetilmeli; sistemde hard-coded ENUM değer kullanımına izin verilmemeli.
+Veri Modeli ve İlişki Notu: state_enum, shipment_type_enum, delivery_option_enum, cargo_type_enum, payment_method_enum, payment_status_enum, currency_enum lookup tabloları.
+
+Gereksinim 72
+Açıklama: Tüm para birimi alanları ISO Currency Code tablosuna bağlı Foreign Key ile tutulmalı.
+Veri Modeli ve İlişki Notu: currency_enum tablosu ISO 4217 standardında, cargo, product, invoice, payment, pricing_calculation gibi tablolarda currency_id FK.
+
+Gereksinim 73
+Açıklama: Her cargo'ya bağlı fiyat hesaplama, sigorta, vergi, shipment cost modelleri zaman-damgalı olarak snapshot tablolarda arşivlenmeli ve geriye dönük değiştirilemez olmalı.
+Veri Modeli ve İlişki Notu: pricing_calculation, cargo_insurance, customs_tax_calculation tablolarında trigger ile UPDATE/DELETE yasaklama, calculation_timestamp ile zaman damgası.
+
+Gereksinim 74
+Açıklama: Tüm veri operasyonlarında soft-delete modeli uygulanmalı, true delete sadece audit/archive tablosuna taşındıktan sonra yapılabilmeli.
+Veri Modeli ve İlişki Notu: Tüm tablolarda deleted_at TIMESTAMP WITH TIME ZONE NULL kolonu, indekslerde WHERE deleted_at IS NULL filtreleri.
+
+Gereksinim 75
+Açıklama: Müşteri, çalışan, partner gibi aktör tipleri Actor Base Entity ile yönetilmeli ve Role-based inheritance DB modeli uygulanmalı.
+Veri Modeli ve İlişki Notu: actor base tablosu, customer, employee, partner tabloları actor_id UNIQUE FK ile (inheritance pattern).
+
+Gereksinim 76
+Açıklama: Gümrük ve legal regulation bilgileri yıl bazlı versiyonlanmalı ve vergisel hesaplamalarda vergi geçerlilik tarih dönemine göre lookup uygulanmalı.
+Veri Modeli ve İlişki Notu: tax_regulation_version tablosu country_id, year UNIQUE ile versiyonlama, customs_tax_calculation tablosunda tax_regulation_version_id FK.
+
+Gereksinim 77
+Açıklama: High availability için tablo boyutları belirli eşiği geçtiğinde partitioning zorunlu uygulanmalı (tarih / ülke / cargo type bazlı partition).
+Veri Modeli ve İlişki Notu: system_config tablosunda partition_threshold_rows config değeri, time_series_data tablosunda partition önerisi.
+
+Gereksinim 78
+Açıklama: Cargo movement events tablosunda location FK'sı ile branch veya transfer center FK ayırt biçimi tanımlı olmalı (polymorphic FK modeli yasak; type column FK ile ayrılmalı).
+Veri Modeli ve İlişki Notu: cargo_movement_history tablosunda location_type kolonu ('branch' veya 'distribution_center'), branch_id ve distribution_center_id nullable FK'lar, CHECK constraint ile karşılıklı kontrol.
+
+Gereksinim 79
+Açıklama: Tüm personel yetki yapısı RBAC tabanlı olmalı ve kullanıcı > rol > permission > resource ilişkisi DB seviyesinde enforce edilmeli.
+Veri Modeli ve İlişki Notu: employee_role > role > role_permission > permission FK zinciri ile RBAC modeli.
+
+Gereksinim 80
+Açıklama: Ülkeler arası transfer rotalarında risk scoring tablosu kullanılmalı ve rota seçimi constraint ile minimum risk threshold kontrolüne dahil edilmeli.
+Veri Modeli ve İlişki Notu: route_risk_score tablosu route_id FK ile route tablosuna bağlı, minimum_risk_threshold constraint ile kontrol.
+
+Gereksinim 81
+Açıklama: Her cargo shipment için weight, dimension, volumetric weight verileri zorunlu alan olmalı ve veriler normalized unit standard (SI) formatında tutulmalı.
+Veri Modeli ve İlişki Notu: cargo tablosunda weight_kg, length_cm, width_cm, height_cm, volumetric_weight_kg kolonları (SI birimleri).
+
+Gereksinim 82
+Açıklama: Ödeme operasyonları PCI DSS uyumlu mask field standardına göre saklanmalı (kart bilgisi mask + tokenized + never full PAN).
+Veri Modeli ve İlişki Notu: payment tablosunda masked_card_number, card_last_four, card_token, cardholder_name_encrypted kolonları.
+
+Gereksinim 83
+Açıklama: Kargo hasar analiz kayıtları singular event üzerinden event_evidence tablolarında fotoğraf hash, rapor hash, belge hash ile immutable kayıt altında tutulmalı.
+Veri Modeli ve İlişki Notu: event_evidence tablosu event_reference_id ile cargo_damage_report.id referansı, photo_hash, report_hash, document_hash kolonları, trigger ile UPDATE/DELETE yasaklama.
+
+Gereksinim 84
+Açıklama: Sistem zaman serisi data analiz performansı için hareket log tablosu ayrı column-store optimized tabloya replikasyonlu saklanmalı.
+Veri Modeli ve İlişki Notu: cargo_movement_history, cargo_event_log tabloları, time_series_data tablosu partition stratejisi ile.
+
+Gereksinim 85
+Açıklama: Çoklu ülke operasyonlarında exchange rate verisi central FX rate table üzerinden kaydedilmeli ve tüm hesaplamalar işlem gerçekleştiği tarihteki FX'e göre yapılmalı.
+Veri Modeli ve İlişki Notu: exchange_rate tablosu from_currency_id ve to_currency_id FK'ları ile currency_enum tablosuna bağlı, effective_date ile tarih bazlı lookup.
+
+Gereksinim 86
+Açıklama: Sistem veri arşivleme yaşam döngüsü (archiving lifecycle) tanımlı olmalı; 1 yıl aktif transactional storage > 2-3 yıl archive > sonrası cold storage şeklinde rollover rule uygulanmalı.
+Veri Modeli ve İlişki Notu: system_config tablosunda archive_lifecycle_active_years, archive_lifecycle_archive_years config değerleri.
+
+Gereksinim 87
+Açıklama: Tüm sensitive columnlar (kişisel veri, ödeme bilgisi, pasaport, TC, adres vs) field-based encryption veya tokenization ile saklanmalı.
+Veri Modeli ve İlişki Notu: customer.encrypted_identity_number BYTEA, payment.cardholder_name_encrypted BYTEA, partner_config.api_key_encrypted BYTEA.
+
+Gereksinim 88
+Açıklama: Arşiv, canlı veri ve cold-storage tabloları fiziksel olarak farklı tablespace üzerinde tutulmalı.
+Veri Modeli ve İlişki Notu: PostgreSQL tablespace yönetimi için implementation notu.
+
+Gereksinim 89
+Açıklama: Ülkeye göre data residency kuralları uygulanabilmeli (ör. Europe hosted data > EU region DB üzerinde partition/selective storage).
+Veri Modeli ve İlişki Notu: country tablosu ile ülke bilgisi, regional partition stratejisi için hazırlık.
+
+Gereksinim 90
+Açıklama: DB kullanıcı rolleri ile application rolleri ayrı yönetilmeli (DB Level RBAC != App RBAC).
+Veri Modeli ve İlişki Notu: PostgreSQL role management ve application level RBAC ayrımı.
+
+Gereksinim 91
+Açıklama: Audit tablosu üzerinde UPDATE ve DELETE yasak olmalı, sadece INSERT allowed.
+Veri Modeli ve İlişki Notu: audit_log tablosunda trigger ile UPDATE/DELETE yasaklama, cargo_state_history tablosunda da aynı kısıtlama.
+
+Gereksinim 92
+Açıklama: Backup execution, restore test ve disaster recovery senaryosu en az 6 ayda bir otomatik olarak test edilmeli ve loglanmalı.
+Veri Modeli ve İlişki Notu: backup_log tablosu restore_test_date, restore_test_status kolonları ile.
+
+Gereksinim 93
+Açıklama: Maintenance plan zorunlu olmalı; index rebuild / statistics update threshold bazlı otomatik çalıştırılmalı.
+Veri Modeli ve İlişki Notu: maintenance_log tablosu maintenance_type, execution_date, duration_seconds kolonları ile.
+
+Gereksinim 94
+Açıklama: Historical tablolar üzerinde CDC (Change Data Capture) uygulanmalı.
+Veri Modeli ve İlişki Notu: change_data_capture tablosu source_table, source_record_id, change_type, processed kolonları ile.
+
+Gereksinim 95
+Açıklama: DB'de query plan regression detection ve performance anomaly monitoring mekanizmaları olmalı.
+Veri Modeli ve İlişki Notu: PostgreSQL pg_stat_statements ve monitoring araçları ile.
+
+Gereksinim 96
+Açıklama: Tüm transactionlarını yazan service name – request ID – correlation ID audit'e loglanmalı.
+Veri Modeli ve İlişki Notu: audit_log tablosunda service_name, request_id, correlation_id kolonları.
+
+---
+
+## VII. BİLDİRİM SİSTEMİ
+
+Gereksinim 97
+Açıklama: Sistem, kargo durum değişikliklerinde otomatik bildirim gönderebilmeli (SMS, Email, Push Notification).
+Veri Modeli ve İlişki Notu: notification_queue tablosu notification_template_id FK ile, notification_template.notification_type ('sms', 'email', 'push'), trigger ile otomatik kuyruğa ekleme.
+
+Gereksinim 98
+Açıklama: Müşteriler özel bildirim tercihlerini seçebilmeli (sadece önemli güncellemeler, tüm güncellemeler, bildirim yok).
+Veri Modeli ve İlişki Notu: customer_notification_preference tablosu customer_id FK ile customer tablosuna bağlı, preference_level ('none', 'important_only', 'all').
+
+Gereksinim 99
+Açıklama: Gecikme, hasar, iptal gibi kritik durumlarda acil bildirim sistemi olmalı.
+Veri Modeli ve İlişki Notu: alert_rule tablosu severity_level ('low', 'medium', 'high', 'critical'), alert_log tablosu ile otomatik tetikleme.
+
+Gereksinim 100
+Açıklama: Bildirim gönderim başarı/başarısızlık durumları loglanmalı ve retry mekanizması olmalı.
+Veri Modeli ve İlişki Notu: notification_queue tablosunda status, retry_count, max_retries, error_message, notification_log tablosu immutable audit için.
+
+Gereksinim 101
+Açıklama: Bildirim şablonları çoklu dil desteği ile yönetilebilmeli.
+Veri Modeli ve İlişki Notu: notification_template tablosu language_code FK ile language tablosuna bağlı.
+
+Gereksinim 102
+Açıklama: Bildirim kuyruğu sistemi olmalı ve öncelik sıralaması yapılabilmeli.
+Veri Modeli ve İlişki Notu: notification_queue tablosunda priority (1-10), scheduled_time, indeks ile öncelikli sıralama.
+
+Gereksinim 103
+Açıklama: Bildirim gönderim geçmişi immutable audit log olarak saklanmalı.
+Veri Modeli ve İlişki Notu: notification_log tablosu notification_queue_id FK ile, trigger ile UPDATE/DELETE yasaklama.
+
+Gereksinim 104
+Açıklama: Bildirim şablonlarında değişken (placeholder) desteği olmalı.
+Veri Modeli ve İlişki Notu: notification_template tablosunda variables JSONB kolonu, notification_data JSONB ile render edilmiş veri.
+
+Gereksinim 105
+Açıklama: Farklı bildirim kanalları (SMS, Email, Push) için ayrı provider entegrasyonları yönetilebilmeli.
+Veri Modeli ve İlişki Notu: notification_log tablosunda provider_name, provider_response JSONB ile provider entegrasyon takibi.
+
+Gereksinim 106
+Açıklama: Bildirim gönderim limitleri ve throttling mekanizması olmalı.
+Veri Modeli ve İlişki Notu: notification_queue tablosunda max_retries, sistem seviyesinde rate limiting (application layer).
+
+---
+
+## VIII. KİMLİK DOĞRULAMA VE GÜVENLİK
+
+Gereksinim 107
+Açıklama: Kullanıcı kimlik doğrulama için oturum yönetimi (session management) tablosu olmalı.
+Veri Modeli ve İlişki Notu: user_session tablosu actor_id FK ile actor tablosuna bağlı, session_token_hash, expires_at, is_active.
+
+Gereksinim 108
+Açıklama: Şifre politikası kuralları (min uzunluk, komplekslik, değiştirme sıklığı) sistemde tanımlı olmalı.
+Veri Modeli ve İlişki Notu: security_policy tablosu policy_type='password' ile min_password_length, password_complexity_required, password_expiry_days.
+
+Gereksinim 109
+Açıklama: İki faktörlü kimlik doğrulama (2FA) desteği olmalı.
+Veri Modeli ve İlişki Notu: two_factor_auth tablosu actor_id UNIQUE FK ile actor tablosuna bağlı, two_factor_method ('sms', 'email', 'authenticator').
+
+Gereksinim 110
+Açıklama: API rate limiting ve throttling mekanizması olmalı.
+Veri Modeli ve İlişki Notu: api_rate_limit tablosu endpoint_pattern, rate_limit_count, time_window_seconds ile rate limiting tanımları.
+
+Gereksinim 111
+Açıklama: Şüpheli aktivite tespiti ve güvenlik olayları loglanmalı.
+Veri Modeli ve İlişki Notu: security_incident tablosu incident_type, severity_level, actor_id FK ile güvenlik olay takibi.
+
+Gereksinim 112
+Açıklama: Başarısız giriş denemeleri takip edilmeli ve lockout mekanizması olmalı.
+Veri Modeli ve İlişki Notu: login_history tablosu login_status ('success', 'failed'), security_policy tablosunda max_failed_login_attempts, lockout_duration_minutes.
+
+Gereksinim 113
+Açıklama: Oturum token'ları encrypted olarak saklanmalı.
+Veri Modeli ve İlişki Notu: user_session tablosunda session_token_hash (hashed/encrypted token), secret_key_encrypted BYTEA.
+
+Gereksinim 114
+Açıklama: Güvenlik olayları için otomatik uyarı sistemi olmalı.
+Veri Modeli ve İlişki Notu: security_incident tablosu severity_level ile, alert_rule ile otomatik uyarı tetikleme.
+
+Gereksinim 115
+Açıklama: IP bazlı erişim kontrolü ve whitelist/blacklist yönetimi olmalı.
+Veri Modeli ve İlişki Notu: login_history tablosunda ip_address, user_session.ip_address, application layer'da IP kontrolü (config tablosu ile yönetilebilir).
+
+Gereksinim 116
+Açıklama: Kullanıcı aktivite logları güvenlik amaçlı saklanmalı.
+Veri Modeli ve İlişki Notu: login_history tablosu, api_access_log tablosu actor_id FK ile, immutable audit log formatında.
+
+---
+
+## IX. MÜŞTERİ İLİŞKİLERİ VE SEGMENTASYON
+
+Gereksinim 117
+Açıklama: Müşteri segmentasyonu sistemi (VIP, standart, yeni müşteri) olmalı.
+Veri Modeli ve İlişki Notu: customer_segment tablosu lookup, customer_segment_assignment tablosu customer_id ve customer_segment_id FK'ları ile (N-N ilişki).
+
+Gereksinim 118
+Açıklama: Müşteri sadakat programı ve puan sistemi olmalı.
+Veri Modeli ve İlişki Notu: loyalty_program tablosu lookup, customer_loyalty_points tablosu customer_id UNIQUE FK ile customer tablosuna bağlı (1-1 ilişki).
+
+Gereksinim 119
+Açıklama: Müşteri yorum ve değerlendirme sistemi olmalı.
+Veri Modeli ve İlişki Notu: customer_review tablosu customer_id FK ile customer tablosuna, cargo_id FK ile cargo tablosuna bağlı, review_rating tablosu ile detaylı puanlama.
+
+Gereksinim 120
+Açıklama: Müşteri kredi limiti ve ödeme geçmişi takibi olmalı.
+Veri Modeli ve İlişki Notu: customer_credit_limit tablosu customer_id UNIQUE FK ile customer tablosuna bağlı (1-1 ilişki), payment_history tablosu ödeme geçmişi için.
+
+Gereksinim 121
+Açıklama: Özel müşteri notları ve etiketleri sistemi olmalı.
+Veri Modeli ve İlişki Notu: customer_note tablosu customer_id FK ile customer tablosuna bağlı, customer_tag ve customer_tag_assignment tabloları ile etiket yönetimi.
+
+Gereksinim 122
+Açıklama: Müşteri segment değişiklikleri otomatik veya manuel olarak yönetilebilmeli.
+Veri Modeli ve İlişki Notu: customer_segment_assignment tablosunda assigned_by FK ile employee tablosuna, assigned_date ile zaman damgası, otomatik segmentasyon için application logic.
+
+Gereksinim 123
+Açıklama: Sadakat puanlarının kazanılması ve kullanılması süreçleri otomatik hesaplanmalı.
+Veri Modeli ve İlişki Notu: loyalty_transaction tablosu customer_loyalty_points_id FK ile, transaction_type ('earned', 'redeemed', 'expired', 'adjusted'), related_entity_type ve related_entity_id ile otomatik tetikleme.
+
+Gereksinim 124
+Açıklama: Müşteri yorumları için moderasyon ve onay süreci olmalı.
+Veri Modeli ve İlişki Notu: customer_review tablosunda is_verified, is_published boolean alanları, workflow ile onay süreci.
+
+Gereksinim 125
+Açıklama: Müşteri kredi limiti aşımında otomatik uyarı sistemi olmalı.
+Veri Modeli ve İlişki Notu: customer_credit_limit tablosunda available_amount GENERATED kolonu, trigger veya application logic ile alert_rule tetikleme.
+
+Gereksinim 126
+Açıklama: Müşteri etiketleri ile filtreleme ve arama yapılabilmeli.
+Veri Modeli ve İlişki Notu: customer_tag_assignment tablosu customer_id ve customer_tag_id FK'ları ile, indeksler ile hızlı filtreleme.
+
+---
+
+## X. BARKOD VE ETİKETLEME
+
+Gereksinim 127
+Açıklama: Her kargo için otomatik barkod/QR kod oluşturma sistemi olmalı.
+Veri Modeli ve İlişki Notu: cargo_barcode tablosu cargo_id UNIQUE FK ile cargo tablosuna bağlı (1-1 ilişki), cargo_qr_code tablosu aynı şekilde.
+
+Gereksinim 128
+Açıklama: Etiket format şablonları ve özelleştirme sistemi olmalı.
+Veri Modeli ve İlişki Notu: label_template tablosu lookup, label_configuration tablosu label_template_id ve cargo_id FK'ları ile özelleştirme.
+
+Gereksinim 129
+Açıklama: Etiket yazdırma geçmişi ve hata logları tutulmalı.
+Veri Modeli ve İlişki Notu: label_print_history tablosu label_configuration_id FK ile, print_status ('success', 'failed', 'partial'), error_message.
+
+Gereksinim 130
+Açıklama: Çoklu dil destekli etiket formatları olmalı.
+Veri Modeli ve İlişki Notu: label_template tablosunda supported_languages JSONB, default_language_code FK ile language tablosuna, label_configuration.language_code FK.
+
+Gereksinim 131
+Açıklama: Barkod/QR kod doğrulama ve validasyon sistemi olmalı.
+Veri Modeli ve İlişki Notu: cargo_barcode.barcode_value UNIQUE, cargo_qr_code.qr_code_value UNIQUE, application layer'da validasyon.
+
+Gereksinim 132
+Açıklama: Etiket yazdırma işlemleri batch olarak yapılabilmeli.
+Veri Modeli ve İlişki Notu: label_configuration tablosu ile birden fazla kargo için toplu işlem, application logic ile batch processing.
+
+Gereksinim 133
+Açıklama: Etiket şablonlarında dinamik alan desteği olmalı.
+Veri Modeli ve İlişki Notu: label_template.template_layout JSONB ile layout tanımı, label_configuration.configuration_data JSONB ile dinamik değerler.
+
+Gereksinim 134
+Açıklama: Farklı etiket türleri (kargo, gümrük, depo) için ayrı şablonlar olmalı.
+Veri Modeli ve İlişki Notu: label_template tablosunda template_type ('shipping', 'customs', 'warehouse'), template_code UNIQUE.
+
+Gereksinim 135
+Açıklama: Etiket yazdırma cihazları ile entegrasyon yönetilebilmeli.
+Veri Modeli ve İlişki Notu: label_print_history tablosunda printer_info, printer_settings JSONB ile cihaz yönetimi.
+
+Gereksinim 136
+Açıklama: Etiket geçmişi audit amaçlı saklanmalı.
+Veri Modeli ve İlişki Notu: label_print_history tablosu immutable audit log formatında, print_date ile zaman damgası.
+
+---
+
+## XI. DEPO VE STOK YÖNETİMİ
+
+Gereksinim 137
+Açıklama: Depo (warehouse) yönetim sistemi ve konum bilgileri olmalı.
+Veri Modeli ve İlişki Notu: warehouse tablosu country_id ve city_id FK'ları ile lokasyon, latitude, longitude ile koordinat bilgisi.
+
+Gereksinim 138
+Açıklama: Kargo konteyner/yükleme birimi yönetimi olmalı.
+Veri Modeli ve İlişki Notu: container tablosu warehouse_id FK ile mevcut konum, container_cargo_assignment tablosu ile kargo-konteyner ataması.
+
+Gereksinim 139
+Açıklama: Depo stok seviyesi takibi ve minimum eşik uyarıları olmalı.
+Veri Modeli ve İlişki Notu: warehouse_stock tablosu warehouse_id FK ile, min_threshold, max_threshold, stock_alert tablosu ile uyarı sistemi.
+
+Gereksinim 140
+Açıklama: Kargo kabul/konsolidasyon süreçleri kaydedilmeli.
+Veri Modeli ve İlişki Notu: warehouse_receipt tablosu warehouse_id FK ile, cargo_list JSONB, consolidation_order tablosu ile konsolidasyon yönetimi.
+
+Gereksinim 141
+Açıklama: Depo kapasitesi yönetimi ve doluluk oranı takibi olmalı.
+Veri Modeli ve İlişki Notu: warehouse_capacity tablosu warehouse_id FK ile, current_usage, alert_threshold_percentage, warehouse.current_utilization_percentage.
+
+Gereksinim 142
+Açıklama: Konteyner yükleme ve boşaltma işlemleri kaydedilmeli.
+Veri Modeli ve İlişki Notu: container_cargo_assignment tablosunda loaded_date, unloaded_date, position_in_container ile detaylı takip.
+
+Gereksinim 143
+Açıklama: Depo içi lokasyon (raf, bölge) yönetimi olmalı.
+Veri Modeli ve İlişki Notu: warehouse_location tablosu warehouse_id FK ile, location_code, location_type ('shelf', 'zone', 'room', 'aisle'), koordinat bilgileri.
+
+Gereksinim 144
+Açıklama: Stok seviyesi raporları ve analizleri yapılabilmeli.
+Veri Modeli ve İlişki Notu: warehouse_stock tablosu, stock_alert tablosu ile trend analizi, time_series_data tablosu ile zaman serisi analizi.
+
+Gereksinim 145
+Açıklama: Depo transfer işlemleri (depo arası) yönetilebilmeli.
+Veri Modeli ve İlişki Notu: container tablosunda warehouse_id ile mevcut konum, application logic ile depo arası transfer takibi.
+
+Gereksinim 146
+Açıklama: Depo envanter sayımı (inventory count) sistemi olmalı.
+Veri Modeli ve İlişki Notu: warehouse_stock tablosu ile stok takibi, warehouse_receipt tablosu ile giriş kayıtları, application logic ile sayım işlemleri.
+
+---
+
+## XII. ARAÇ VE TAŞIMA YÖNETİMİ
+
+Gereksinim 147
+Açıklama: Araç (vehicle) tanımlama ve takip sistemi olmalı.
+Veri Modeli ve İlişki Notu: vehicle tablosu vehicle_code UNIQUE, license_plate UNIQUE, vehicle_type_id FK ile vehicle_type tablosuna.
+
+Gereksinim 148
+Açıklama: Araç-kargo atama ve rota eşleştirme sistemi olmalı.
+Veri Modeli ve İlişki Notu: vehicle_cargo_assignment tablosu vehicle_id ve cargo_id FK'ları ile, route_id FK ile rota eşleştirme.
+
+Gereksinim 149
+Açıklama: Araç konum takibi (GPS) entegrasyonu için veri yapısı olmalı.
+Veri Modeli ve İlişki Notu: vehicle_location_history tablosu vehicle_id FK ile, latitude, longitude, location_timestamp, speed_kmh, direction_degrees.
+
+Gereksinim 150
+Açıklama: Araç yakıt tüketimi ve maliyet takibi olmalı.
+Veri Modeli ve İlişki Notu: vehicle_fuel_log tablosu vehicle_id FK ile, fuel_amount_liters, cost, odometer_reading.
+
+Gereksinim 151
+Açıklama: Araç bakım takvimi ve geçmişi yönetilebilmeli.
+Veri Modeli ve İlişki Notu: vehicle_maintenance tablosu vehicle_id FK ile, maintenance_type, maintenance_date, next_maintenance_date.
+
+Gereksinim 152
+Açıklama: Araç tipine göre kapasite ve özellik yönetimi olmalı.
+Veri Modeli ve İlişki Notu: vehicle_type tablosu lookup, default_capacity_weight_kg, default_capacity_volume_cubic_meter, vehicle tablosunda override değerler.
+
+Gereksinim 153
+Açıklama: Araç kullanılabilirlik durumu (available, in_use, maintenance) takip edilmeli.
+Veri Modeli ve İlişki Notu: vehicle tablosunda is_in_use, is_active, vehicle_maintenance ile bakım durumu takibi.
+
+Gereksinim 154
+Açıklama: Araç rotası ve güzergah planlaması araç bazlı yapılabilmeli.
+Veri Modeli ve İlişki Notu: vehicle_route tablosu vehicle_id ve route_id FK'ları ile, driver_id FK ile employee tablosuna, status ile durum takibi.
+
+Gereksinim 155
+Açıklama: Araç maliyet analizi (yakıt, bakım, sigorta) yapılabilmeli.
+Veri Modeli ve İlişki Notu: vehicle_cost tablosu vehicle_id FK ile, cost_type ('fuel', 'maintenance', 'insurance', 'toll', 'parking'), cost_amount, period_start, period_end.
+
+Gereksinim 156
+Açıklama: Araç filo yönetimi ve araç sayısı optimizasyonu için raporlama olmalı.
+Veri Modeli ve İlişki Notu: vehicle tablosu, vehicle_cost, vehicle_maintenance tabloları ile analiz, dashboard_metric ile metrik takibi.
+
+---
+
+## XIII. İNDİRİM VE PROMOSYON
+
+Gereksinim 157
+Açıklama: Promosyon kodu yönetim sistemi olmalı.
+Veri Modeli ve İlişki Notu: promotion tablosu lookup, promotion_code tablosu promotion_id FK ile, code_value UNIQUE.
+
+Gereksinim 158
+Açıklama: Kupon ve indirim kampanyaları sistemi olmalı.
+Veri Modeli ve İlişki Notu: coupon tablosu lookup, coupon_redemption tablosu coupon_id ve customer_id FK'ları ile kullanım takibi.
+
+Gereksinim 159
+Açıklama: Sezonsal fiyatlandırma kuralları olmalı.
+Veri Modeli ve İlişki Notu: seasonal_pricing_rule tablosu season_period_start, season_period_end, shipment_type_id FK, price_multiplier, additional_fee.
+
+Gereksinim 160
+Açıklama: Toplu gönderim indirimleri sistemi olmalı.
+Veri Modeli ve İlişki Notu: bulk_discount_rule tablosu min_quantity, discount_percentage, applicable_to ('all', 'customer_segment', 'institution').
+
+Gereksinim 161
+Açıklama: Promosyon kodlarının kullanım limitleri (kişi başı, toplam) yönetilebilmeli.
+Veri Modeli ve İlişki Notu: promotion tablosunda usage_limit (toplam), promotion_code.is_single_use, promotion_usage.customer_id ile kişi başı kontrol.
+
+Gereksinim 162
+Açıklama: Promosyon geçerlilik tarihleri otomatik kontrol edilmeli.
+Veri Modeli ve İlişki Notu: promotion tablosunda valid_from, valid_to, coupon tablosunda aynı alanlar, application logic ile otomatik kontrol.
+
+Gereksinim 163
+Açıklama: Kupon kullanım geçmişi ve istatistikleri tutulmalı.
+Veri Modeli ve İlişki Notu: coupon_redemption tablosu redeemed_date, discount_applied, promotion_usage tablosu ile istatistik takibi.
+
+Gereksinim 164
+Açıklama: Müşteri segmentine göre otomatik promosyon uygulama sistemi olmalı.
+Veri Modeli ve İlişki Notu: promotion, coupon tabloları ile applicable_to_cargo_types, application logic ile segment bazlı otomatik uygulama.
+
+Gereksinim 165
+Açıklama: Promosyon performans analizi yapılabilmeli.
+Veri Modeli ve İlişki Notu: promotion_usage, coupon_redemption tabloları ile kullanım verileri, dashboard_metric ile analiz.
+
+Gereksinim 166
+Açıklama: Kampanya bazlı indirim kuralları yönetilebilmeli.
+Veri Modeli ve İlişki Notu: promotion, coupon, seasonal_pricing_rule, bulk_discount_rule tabloları ile farklı kampanya türleri.
+
+---
+
+## XIV. SOĞUK ZİNCİR VE ÖZEL TAŞIMA
+
+Gereksinim 167
+Açıklama: Soğuk zincir (cold chain) yönetimi için sıcaklık takip sistemi olmalı.
+Veri Modeli ve İlişki Notu: cold_chain_cargo tablosu cargo_id UNIQUE FK ile cargo tablosuna bağlı (1-1 ilişki), temperature_log tablosu ile sıcaklık takibi.
+
+Gereksinim 168
+Açıklama: Özel teslimat zamanları (time slot) yönetimi olmalı.
+Veri Modeli ve İlişki Notu: delivery_time_slot tablosu lookup, time_slot_booking tablosu delivery_time_slot_id ve cargo_id FK'ları ile rezervasyon.
+
+Gereksinim 169
+Açıklama: Paketleme türleri ve özel ambalaj gereksinimleri sistemi olmalı.
+Veri Modeli ve İlişki Notu: packaging_type tablosu lookup, special_packaging_requirement tablosu cargo_id FK ile cargo tablosuna bağlı.
+
+Gereksinim 170
+Açıklama: Tehlikeli madde (hazardous material) özel takip ve belgeleme sistemi olmalı.
+Veri Modeli ve İlişki Notu: hazardous_material_detail tablosu cargo_id UNIQUE FK ile cargo tablosuna bağlı (1-1 ilişki), hazmat_certificate tablosu ile sertifika yönetimi.
+
+Gereksinim 171
+Açıklama: Soğuk zincir sıcaklık limitlerinin aşımında otomatik uyarı sistemi olmalı.
+Veri Modeli ve İlişki Notu: cold_chain_cargo tablosunda required_temperature_min, required_temperature_max, temperature_alert tablosu ile otomatik uyarı.
+
+Gereksinim 172
+Açıklama: Time slot rezervasyon sistemi ve kapasite yönetimi olmalı.
+Veri Modeli ve İlişki Notu: delivery_time_slot tablosunda available_slots, time_slot_booking tablosu ile rezervasyon, partial unique index ile kapasite kontrolü.
+
+Gereksinim 173
+Açıklama: Özel ambalaj gereksinimlerinin yerine getirilme durumu takip edilmeli.
+Veri Modeli ve İlişki Notu: special_packaging_requirement tablosunda is_fulfilled, fulfilled_date, fulfilled_by FK ile employee tablosuna.
+
+Gereksinim 174
+Açıklama: Tehlikeli madde sertifikalarının geçerlilik kontrolü yapılmalı.
+Veri Modeli ve İlişki Notu: hazmat_certificate tablosunda issue_date, expiry_date, is_valid, application logic ile otomatik kontrol.
+
+Gereksinim 175
+Açıklama: Soğuk zincir kargo için özel taşıma koşulları yönetilebilmeli.
+Veri Modeli ve İlişki Notu: cold_chain_cargo tablosunda cold_chain_type ('frozen', 'refrigerated', 'chilled'), monitoring_required.
+
+Gereksinim 176
+Açıklama: Özel teslimat gereksinimleri müşteri tercihi olarak saklanmalı.
+Veri Modeli ve İlişki Notu: time_slot_booking tablosunda customer_preference, cargo_delivery_preference tablosu ile genel tercih yönetimi.
+
+---
+
+## XV. İŞ AKIŞI VE ONAY SÜREÇLERİ
+
+Gereksinim 177
+Açıklama: İş akışı (workflow) motoru ve adım bazlı onay süreçleri olmalı.
+Veri Modeli ve İlişki Notu: workflow_definition tablosu lookup, workflow_instance tablosu workflow_definition_id FK ile, current_step, status.
+
+Gereksinim 178
+Açıklama: Onay zinciri (approval chain) yönetimi olmalı.
+Veri Modeli ve İlişki Notu: approval_chain tablosu lookup, approval_request tablosu approval_chain_id FK ile, current_level.
+
+Gereksinim 179
+Açıklama: İptal/iade işlemleri için çoklu onay süreci olmalı.
+Veri Modeli ve İlişki Notu: approval_request tablosu entity_type ('cargo_return_request', 'payment_refund'), approval_history ile onay geçmişi.
+
+Gereksinim 180
+Açıklama: Workflow adımlarında otomatik onay koşulları tanımlanabilmeli.
+Veri Modeli ve İlişki Notu: workflow_step tablosu auto_approve_condition JSONB ile koşul mantığı, workflow_definition.steps JSONB.
+
+Gereksinim 181
+Açıklama: Onay süreçlerinde zaman aşımı (timeout) yönetimi olmalı.
+Veri Modeli ve İlişki Notu: workflow_step tablosunda timeout_hours, application logic ile timeout kontrolü ve otomatik işlem.
+
+Gereksinim 182
+Açıklama: Onay geçmişi ve onaylayan kişi bilgileri saklanmalı.
+Veri Modeli ve İlişki Notu: approval_history tablosu approval_request_id FK ile, approver_id FK ile employee tablosuna, decision, decision_date.
+
+Gereksinim 183
+Açıklama: Workflow adımlarında paralel onay desteği olmalı.
+Veri Modeli ve İlişki Notu: workflow_definition.steps JSONB ile paralel adım tanımı, application logic ile paralel işlem.
+
+Gereksinim 184
+Açıklama: Onay red durumunda geri bildirim ve yeniden gönderim mekanizması olmalı.
+Veri Modeli ve İlişki Notu: approval_history tablosunda comments, decision ('approved', 'rejected'), application logic ile yeniden gönderim.
+
+Gereksinim 185
+Açıklama: Workflow şablonları ve yeniden kullanılabilir iş akışları yönetilebilmeli.
+Veri Modeli ve İlişki Notu: workflow_definition tablosu workflow_code UNIQUE, workflow_type ile kategorize, şablon olarak yeniden kullanım.
+
+Gereksinim 186
+Açıklama: İş akışı performans metrikleri (süre, onay oranı) takip edilmeli.
+Veri Modeli ve İlişki Notu: workflow_instance tablosunda started_at, completed_at, time_series_data tablosu ile metrik takibi.
+
+---
+
+## XVI. RAPORLAMA VE ANALİTİK GENİŞLETME
+
+Gereksinim 187
+Açıklama: Özelleştirilebilir dashboard metrikleri ve widget sistemi olmalı.
+Veri Modeli ve İlişki Notu: dashboard_config tablosu user_id, user_type ile kullanıcı bazlı, dashboard_widget tablosu ile widget yönetimi.
+
+Gereksinim 188
+Açıklama: Zaman serisi analizi için optimize edilmiş veri yapısı olmalı.
+Veri Modeli ve İlişki Notu: time_series_data tablosu entity_type, entity_id, metric_name, metric_value, timestamp, partition stratejisi ile optimizasyon.
+
+Gereksinim 189
+Açıklama: Karşılaştırmalı raporlama (yıl bazlı, ay bazlı karşılaştırma) sistemi olmalı.
+Veri Modeli ve İlişki Notu: time_series_data tablosu ile zaman serisi verileri, dashboard_metric tablosu ile metrik hesaplamaları.
+
+Gereksinim 190
+Açıklama: Coğrafi görselleştirme için harita verisi yapısı olmalı.
+Veri Modeli ve İlişki Notu: geo_coordinate tablosu entity_type, entity_id, latitude, longitude, route_visualization tablosu ile rota görselleştirme.
+
+Gereksinim 191
+Açıklama: Dashboard widget'ları otomatik yenileme (refresh) desteği olmalı.
+Veri Modeli ve İlişki Notu: dashboard_widget tablosunda refresh_interval_seconds, dashboard_metric tablosunda refresh_interval_seconds.
+
+Gereksinim 192
+Açıklama: Metrik hesaplama sorguları özelleştirilebilmeli.
+Veri Modeli ve İlişki Notu: dashboard_metric tablosunda calculation_query JSONB ile sorgu konfigürasyonu, data_source ile kaynak tanımı.
+
+Gereksinim 193
+Açıklama: Rapor export (PDF, Excel) fonksiyonları için veri yapısı hazır olmalı.
+Veri Modeli ve İlişki Notu: time_series_data, dashboard_metric tabloları ile veri yapısı, application layer'da export işlemleri.
+
+Gereksinim 194
+Açıklama: Zaman serisi verilerinde partition stratejisi uygulanmalı.
+Veri Modeli ve İlişki Notu: time_series_data tablosu partition önerisi (yıl/ay bazlı), migration dosyasında not olarak belirtilmiş.
+
+Gereksinim 195
+Açıklama: Coğrafi koordinat verileri ile rota görselleştirme yapılabilmeli.
+Veri Modeli ve İlişki Notu: route_visualization tablosu route_id FK ile, visualization_data JSONB (GeoJSON format), geo_coordinate tablosu.
+
+Gereksinim 196
+Açıklama: Analitik veriler için column-store optimizasyonu düşünülmeli.
+Veri Modeli ve İlişki Notu: time_series_data tablosu partition stratejisi, indeksler ile optimizasyon, column-store için external system entegrasyonu notu.
+
+---
+
+## XVII. ÇOKLU DİL VE LOKALİZASYON
+
+Gereksinim 197
+Açıklama: Çoklu dil desteği için translation tabloları olmalı.
+Veri Modeli ve İlişki Notu: translation tablosu translation_key, language_code FK ile language tablosuna, context ile kullanım alanı.
+
+Gereksinim 198
+Açıklama: Tarih/saat formatı, para birimi formatı gibi regional ayarlar olmalı.
+Veri Modeli ve İlişki Notu: locale_setting tablosu locale_code UNIQUE, date_format, time_format, currency_format, number_format, timezone.
+
+Gereksinim 199
+Açıklama: Ülkeye özel hukuki metinler ve şartlar yönetimi olmalı.
+Veri Modeli ve İlişki Notu: legal_document tablosu document_type, language_code FK, version, effective_date, terms_conditions_version tablosu.
+
+Gereksinim 200
+Açıklama: Dil bazlı içerik yönetimi ve onay süreci olmalı.
+Veri Modeli ve İlişki Notu: localized_content tablosu content_type, content_key, language_code FK, translation.is_approved ile onay süreci.
+
+Gereksinim 201
+Açıklama: Lokal ayarlar müşteri/çalışan tercihine göre uygulanabilmeli.
+Veri Modeli ve İlişki Notu: locale_setting tablosu, application logic ile kullanıcı tercihine göre locale uygulama.
+
+Gereksinim 202
+Açıklama: Bölgesel konfigürasyonlar (vergiler, düzenlemeler) yönetilebilmeli.
+Veri Modeli ve İlişki Notu: regional_config tablosu country_id, region_id FK'ları ile, config_key, config_value JSONB.
+
+Gereksinim 203
+Açıklama: Hukuki belgelerin versiyon yönetimi olmalı.
+Veri Modeli ve İlişki Notu: legal_document tablosunda version, effective_date, terms_conditions_version tablosunda version_number.
+
+Gereksinim 204
+Açıklama: Şartlar ve koşulların kabul edilme zorunluluğu takip edilmeli.
+Veri Modeli ve İlişki Notu: terms_conditions_version tablosunda requires_acceptance, application logic ile kabul takibi.
+
+Gereksinim 205
+Açıklama: Çeviri anahtarları (translation keys) merkezi olarak yönetilmeli.
+Veri Modeli ve İlişki Notu: translation tablosunda translation_key UNIQUE (partial unique index ile), localized_content.content_key ile merkezi yönetim.
+
+Gereksinim 206
+Açıklama: Lokalizasyon içerikleri cache'lenebilir formatta saklanmalı.
+Veri Modeli ve İlişki Notu: translation, localized_content tabloları indeksli yapı, application layer'da cache mekanizması.
+
+---
+
+## XVIII. PARTNER VE KOMİSYON YÖNETİMİ
+
+Gereksinim 207
+Açıklama: Partner komisyon hesaplama ve ödeme sistemi olmalı.
+Veri Modeli ve İlişki Notu: partner_commission tablosu partner_id FK ile partner tablosuna, commission_calculation immutable snapshot, commission_payment tablosu.
+
+Gereksinim 208
+Açıklama: Partner performans metrikleri ve KPI takibi olmalı.
+Veri Modeli ve İlişki Notu: partner_performance tablosu partner_id FK ile, partner_kpi tablosu partner_performance_id FK ile detaylı KPI'lar.
+
+Gereksinim 209
+Açıklama: Partner anlaşma şartları ve SLA takibi olmalı.
+Veri Modeli ve İlişki Notu: partner_agreement tablosu partner_id FK ile, sla_tracking tablosu partner_agreement_id FK ile SLA metrikleri.
+
+Gereksinim 210
+Açıklama: Komisyon hesaplamaları immutable snapshot olarak saklanmalı.
+Veri Modeli ve İlişki Notu: commission_calculation tablosu trigger ile UPDATE/DELETE yasaklama, calculation_date ile zaman damgası.
+
+Gereksinim 211
+Açıklama: Partner komisyon ödeme geçmişi yönetilebilmeli.
+Veri Modeli ve İlişki Notu: commission_payment tablosu commission_calculation_id FK ile, payment_date, status, transaction_reference.
+
+Gereksinim 212
+Açıklama: Partner KPI'ları otomatik hesaplanmalı ve raporlanmalı.
+Veri Modeli ve İlişki Notu: partner_kpi tablosu calculation_date, kpi_value, target_value, achievement_percentage, application logic ile otomatik hesaplama.
+
+Gereksinim 213
+Açıklama: SLA ihlalleri otomatik tespit edilmeli ve uyarı sistemi olmalı.
+Veri Modeli ve İlişki Notu: sla_tracking tablosunda status ('compliant', 'breached'), sla_breach tablosu ile ihlal kayıtları, alert_rule ile uyarı.
+
+Gereksinim 214
+Açıklama: Partner performans raporları dönemsel (aylık, üç aylık) oluşturulabilmeli.
+Veri Modeli ve İlişki Notu: partner_performance tablosu performance_period ('month', 'quarter', 'year'), period_start, period_end.
+
+Gereksinim 215
+Açıklama: Partner anlaşmalarının geçerlilik süreleri otomatik kontrol edilmeli.
+Veri Modeli ve İlişki Notu: partner_agreement tablosunda start_date, end_date, is_active, application logic ile otomatik kontrol.
+
+Gereksinim 216
+Açıklama: SLA breach durumlarında otomatik bildirim ve çözüm süreci yönetilebilmeli.
+Veri Modeli ve İlişki Notu: sla_breach tablosu breach_severity, resolution_action, resolved_date, resolved_by FK ile employee tablosuna, notification_queue ile bildirim.
+
+---
+
+## XIX. MALİYET VE BÜTÇE YÖNETİMİ
+
+Gereksinim 217
+Açıklama: Maliyet merkezi (cost center) yönetimi olmalı.
+Veri Modeli ve İlişki Notu: cost_center tablosu cost_center_code UNIQUE, department_name, budget_year, cost_allocation tablosu ile maliyet tahsisi.
+
+Gereksinim 218
+Açıklama: Departman bazlı bütçe yönetimi ve harcama takibi olmalı.
+Veri Modeli ve İlişki Notu: department_budget tablosu department_name, budget_year, budget_amount, spent_amount, budget_tracking tablosu ile harcama takibi.
+
+Gereksinim 219
+Açıklama: İş birimi bazlı kâr/zarar analizi için veri yapısı olmalı.
+Veri Modeli ve İlişki Notu: profit_loss_analysis tablosu business_unit, analysis_period ('month', 'quarter', 'year'), revenue, cost, profit GENERATED.
+
+Gereksinim 220
+Açıklama: Maliyet tahsis kuralları otomatik veya manuel uygulanabilmeli.
+Veri Modeli ve İlişki Notu: cost_allocation tablosu allocation_type, entity_id, cost_amount, application logic ile otomatik veya manuel tahsis.
+
+Gereksinim 221
+Açıklama: Bütçe aşım durumlarında otomatik uyarı sistemi olmalı.
+Veri Modeli ve İlişki Notu: department_budget tablosunda available_amount GENERATED, alert_rule ile otomatik uyarı tetikleme.
+
+Gereksinim 222
+Açıklama: Maliyet merkezleri hiyerarşik yapıda yönetilebilmeli.
+Veri Modeli ve İlişki Notu: cost_center tablosu, application logic ile hiyerarşik yapı (parent_cost_center_id kolonu eklenebilir).
+
+Gereksinim 223
+Açıklama: Bütçe takip raporları ve dashboard'ları olmalı.
+Veri Modeli ve İlişki Notu: budget_tracking, department_budget tabloları ile veri, dashboard_config ile özelleştirilebilir dashboard'lar.
+
+Gereksinim 224
+Açıklama: Kâr/zarar analizleri dönemsel (aylık, yıllık) yapılabilmeli.
+Veri Modeli ve İlişki Notu: profit_loss_analysis tablosu analysis_period, period_start, period_end ile dönemsel analiz.
+
+Gereksinim 225
+Açıklama: Maliyet kategorileri (operational, capital, marketing) yönetilebilmeli.
+Veri Modeli ve İlişki Notu: department_budget tablosunda budget_category, budget_tracking tablosunda expense_type.
+
+Gereksinim 226
+Açıklama: Bütçe revizyon ve transfer işlemleri kaydedilmeli.
+Veri Modeli ve İlişki Notu: budget_tracking tablosu ile harcama kayıtları, application logic ile revizyon ve transfer işlemleri (audit log ile).
+
+Gereksinim 227
+Açıklama: Nakit akış yönetimi ve likidite takibi sistemi olmalı.
+Veri Modeli ve İlişki Notu: cash_flow tablosu period_start, period_end, opening_balance, closing_balance, currency_id FK ile currency_enum tablosuna, time_series_data tablosu ile trend analizi.
+
+Gereksinim 228
+Açıklama: Maliyet tahminleme ve bütçe projeksiyon modelleri olmalı.
+Veri Modeli ve İlişki Notu: budget_projection tablosu department_budget_id FK ile department_budget tablosuna, projection_period, projected_amount, projection_method kolonları ile tahmin modelleri.
+
+Gereksinim 229
+Açıklama: Finansal raporlama ve konsolidasyon sistemi olmalı.
+Veri Modeli ve İlişki Notu: financial_report tablosu report_type ('income_statement', 'balance_sheet', 'cash_flow'), report_period, consolidated_data JSONB ile konsolide raporlar, profit_loss_analysis tablosu ile entegrasyon.
+
+Gereksinim 230
+Açıklama: Bütçe performans analizi ve sapma raporlama sistemi olmalı.
+Veri Modeli ve İlişki Notu: budget_performance tablosu department_budget_id FK ile department_budget tablosuna, budgeted_amount, actual_amount, variance_amount, variance_percentage GENERATED kolonları ile sapma analizi.
+
+Gereksinim 231
+Açıklama: Finansal kontroller ve onay süreçleri yönetilebilmeli.
+Veri Modeli ve İlişki Notu: financial_control tablosu control_type, threshold_amount, approval_required boolean, approval_chain_id FK ile approval_chain tablosuna, budget_tracking.approved_by FK ile employee tablosuna.
+
+Gereksinim 232
+Açıklama: Muhasebe entegrasyonu ve defter kayıt sistemi olmalı.
+Veri Modeli ve İlişki Notu: accounting_entry tablosu entry_type ('debit', 'credit'), account_code, amount, currency_id FK ile currency_enum tablosuna, reference_entity_type ve reference_entity_id ile kaynak ilişkilendirme.
+
+Gereksinim 233
+Açıklama: Vergi yönetimi ve otomatik vergi hesaplama sistemi olmalı.
+Veri Modeli ve İlişki Notu: tax_calculation tablosu tax_type, tax_rate, taxable_amount, calculated_tax, country_id FK ile country tablosuna, tax_regulation_version_id FK ile tax_regulation_version tablosuna.
+
+Gereksinim 234
+Açıklama: Finansal risk yönetimi ve risk analizi sistemi olmalı.
+Veri Modeli ve İlişki Notu: financial_risk tablosu risk_type, risk_level ('low', 'medium', 'high', 'critical'), risk_score, mitigation_plan JSONB, cost_allocation ve budget_tracking tabloları ile risk takibi.
+
+Gereksinim 235
+Açıklama: Maliyet optimizasyon analizi ve öneri sistemi olmalı.
+Veri Modeli ve İlişki Notu: cost_optimization tablosu analysis_period, current_cost, optimized_cost, savings_potential, recommendation JSONB, cost_allocation ve profit_loss_analysis tabloları ile analiz.
+
+Gereksinim 236
+Açıklama: Finansal karşılaştırmalı analiz ve benchmarking sistemi olmalı.
+Veri Modeli ve İlişki Notu: financial_comparison tablosu comparison_type ('year_over_year', 'period_over_period', 'budget_vs_actual'), baseline_period, comparison_period, metrics JSONB, profit_loss_analysis ve budget_performance tabloları ile karşılaştırma.
+
+---
+
+## XX. KALİTE VE UYUMLULUK
+
+Gereksinim 237
+Açıklama: ISO uyumluluk sertifikaları ve audit kayıtları sistemi olmalı.
+Veri Modeli ve İlişki Notu: compliance_certificate tablosu certificate_type ('ISO_9001', 'ISO_27001', 'GDPR', 'SOC2'), compliance_audit tablosu ile audit kayıtları.
+
+Gereksinim 238
+Açıklama: Kalite kontrol check-list'leri ve onay süreçleri olmalı.
+Veri Modeli ve İlişki Notu: quality_checklist tablosu lookup, quality_check_result tablosu quality_checklist_id FK ile, checked_by FK ile employee tablosuna.
+
+Gereksinim 239
+Açıklama: İş sürekliliği planı (BCP) dokümantasyon ve test kayıtları olmalı.
+Veri Modeli ve İlişki Notu: business_continuity_plan tablosu plan_name, plan_version, document_reference, disaster_recovery_test tablosu ile test kayıtları.
+
+Gereksinim 240
+Açıklama: Uyumluluk sertifikalarının geçerlilik kontrolü otomatik yapılmalı.
+Veri Modeli ve İlişki Notu: compliance_certificate tablosunda issue_date, expiry_date, is_valid, application logic ile otomatik kontrol.
+
+Gereksinim 241
+Açıklama: Kalite kontrol sonuçları trend analizi yapılabilmeli.
+Veri Modeli ve İlişki Notu: quality_check_result tablosu check_date, pass_status, time_series_data tablosu ile trend analizi.
+
+Gereksinim 242
+Açıklama: Compliance audit bulguları için action item takibi olmalı.
+Veri Modeli ve İlişki Notu: compliance_audit tablosunda findings JSONB, action_items JSONB, follow_up_date, follow_up_completed.
+
+Gereksinim 243
+Açıklama: İş sürekliliği test senaryoları ve sonuçları saklanmalı.
+Veri Modeli ve İlişki Notu: disaster_recovery_test tablosu business_continuity_plan_id FK ile, test_type, test_results, pass_status.
+
+Gereksinim 244
+Açıklama: Kalite metrikleri ve performans göstergeleri raporlanabilmeli.
+Veri Modeli ve İlişki Notu: quality_check_result tablosu, dashboard_metric tablosu ile metrik tanımları, raporlama için veri yapısı.
+
+Gereksinim 245
+Açıklama: Uyumluluk dokümantasyon versiyonlama sistemi olmalı.
+Veri Modeli ve İlişki Notu: business_continuity_plan tablosunda plan_version, last_reviewed_date, next_review_date, versiyon yönetimi.
+
+Gereksinim 246
+Açıklama: Kalite ve uyumluluk raporları otomatik oluşturulabilmeli.
+Veri Modeli ve İlişki Notu: compliance_audit, quality_check_result, disaster_recovery_test tabloları ile veri, dashboard_config ile otomatik raporlama.
