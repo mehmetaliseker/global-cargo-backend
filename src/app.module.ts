@@ -40,6 +40,10 @@ import { InstitutionAgreementModule } from './billing/institution-agreement/inst
 import { InvoiceModule } from './billing/invoice/invoice.module';
 import { PaymentModule } from './billing/payment/payment.module';
 import { PaymentRefundModule } from './billing/payment-refund/payment-refund.module';
+import { CustomsModule } from './customs/customs.module';
+import { InsuranceModule } from './insurance/insurance.module';
+import { RoutingModule } from './routing/routing.module';
+import { HrModule } from './hr/hr.module';
 
 @Module({
   imports: [
@@ -85,6 +89,10 @@ import { PaymentRefundModule } from './billing/payment-refund/payment-refund.mod
     InvoiceModule,
     PaymentModule,
     PaymentRefundModule,
+    CustomsModule,
+    InsuranceModule,
+    RoutingModule,
+    HrModule,
   ],
   controllers: [AppController],
   providers: [AppService],
