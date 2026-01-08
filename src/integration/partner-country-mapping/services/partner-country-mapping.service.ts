@@ -139,7 +139,7 @@ export class PartnerCountryMappingService {
     const entity = await this.partnerCountryMappingRepository.update(
       id,
       updateDto.isActive ?? existing.is_active,
-      updateDto.mappingData ?? undefined,
+      updateDto.mappingData ?? null,
     );
 
     return this.mapToDto(entity);

@@ -7,6 +7,8 @@ import { CargoInsuranceRepository } from '../repositories/cargo-insurance.reposi
 import {
   CargoInsuranceResponseDto,
   CreateCargoInsuranceDto,
+  UpdateCargoInsuranceDto,
+  ActivateCargoInsuranceDto,
 } from '../dto/cargo-insurance.dto';
 import { CargoInsuranceEntity } from '../repositories/cargo-insurance.repository.interface';
 

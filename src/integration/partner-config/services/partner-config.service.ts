@@ -128,7 +128,7 @@ export class PartnerConfigService {
       throw new NotFoundException(`Partner config with id ${id} not found`);
     }
 
-    let apiKeyEncrypted: Buffer | null = undefined;
+    let apiKeyEncrypted: Buffer | null = null;
     if (updateDto.apiKey !== undefined) {
       if (updateDto.apiKey === null || updateDto.apiKey.length === 0) {
         apiKeyEncrypted = null;
@@ -136,10 +136,12 @@ export class PartnerConfigService {
         apiKeyEncrypted = await this.encryptApiKey(updateDto.apiKey);
       }
     }
+    // If apiKey is undefined, pass null to repository
+    // Repository uses COALESCE to keep existing value
 
     const entity = await this.partnerConfigRepository.update(
       id,
-      updateDto.configData ?? undefined,
+      updateDto.configData ?? null,
       apiKeyEncrypted,
       updateDto.isActive ?? existing.is_active,
     );

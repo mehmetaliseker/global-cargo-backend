@@ -52,6 +52,15 @@ import { NotificationModule } from './notification/notification.module';
 import { SecurityModule } from './security/security.module';
 import { CrmModule } from './crm/crm.module';
 import { BarcodeModule } from './barcode/barcode.module';
+import { WarehouseModule } from './warehouse/warehouse.module';
+import { FleetModule } from './fleet/fleet.module';
+import { PromotionModule } from './promotion/promotion.module';
+import { ColdchainModule } from './coldchain/coldchain.module';
+import { WorkflowModule } from './workflow/workflow.module';
+import { AnalyticsModule } from './analytics/analytics.module';
+import { LocalizationModule } from './localization/localization.module';
+import { FinanceModule } from './finance/finance.module';
+import { QualityModule } from './quality/quality.module';
 
 @Module({
   imports: [
@@ -109,8 +118,17 @@ import { BarcodeModule } from './barcode/barcode.module';
     SecurityModule,
     CrmModule,
     BarcodeModule,
+    WarehouseModule,
+    FleetModule,
+    PromotionModule,
+    ColdchainModule,
+    WorkflowModule,
+    AnalyticsModule,
+    LocalizationModule,
+    FinanceModule,
+    QualityModule,
   ],
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule {}
+export class AppModule { }
