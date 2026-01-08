@@ -49,6 +49,9 @@ import { SupportModule } from './support/support.module';
 import { AuditModule } from './audit/audit.module';
 import { SystemModule } from './system/system.module';
 import { NotificationModule } from './notification/notification.module';
+import { SecurityModule } from './security/security.module';
+import { CrmModule } from './crm/crm.module';
+import { BarcodeModule } from './barcode/barcode.module';
 
 @Module({
   imports: [
@@ -103,6 +106,9 @@ import { NotificationModule } from './notification/notification.module';
     AuditModule,
     SystemModule,
     NotificationModule,
+    SecurityModule,
+    CrmModule,
+    BarcodeModule,
   ],
   controllers: [AppController],
   providers: [AppService],
