@@ -44,6 +44,8 @@ import { CustomsModule } from './customs/customs.module';
 import { InsuranceModule } from './insurance/insurance.module';
 import { RoutingModule } from './routing/routing.module';
 import { HrModule } from './hr/hr.module';
+import { IntegrationModule } from './integration/integration.module';
+import { SupportModule } from './support/support.module';
 
 @Module({
   imports: [
@@ -93,6 +95,8 @@ import { HrModule } from './hr/hr.module';
     InsuranceModule,
     RoutingModule,
     HrModule,
+    IntegrationModule,
+    SupportModule,
   ],
   controllers: [AppController],
   providers: [AppService],
