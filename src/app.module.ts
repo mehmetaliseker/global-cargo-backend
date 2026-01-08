@@ -46,6 +46,7 @@ import { RoutingModule } from './routing/routing.module';
 import { HrModule } from './hr/hr.module';
 import { IntegrationModule } from './integration/integration.module';
 import { SupportModule } from './support/support.module';
+import { AuditModule } from './audit/audit.module';
 
 @Module({
   imports: [
@@ -97,6 +98,7 @@ import { SupportModule } from './support/support.module';
     HrModule,
     IntegrationModule,
     SupportModule,
+    AuditModule,
   ],
   controllers: [AppController],
   providers: [AppService],
