@@ -171,6 +171,22 @@ export class CustomerSupportRequestRepository
   ): Promise<CustomerSupportRequestEntity> {
     return await this.databaseService.transaction(
       async (client: PoolClient) => {
+        // Migration 014: Unique constraint on cargo_id (when not NULL)
+        // Check if an active support request already exists for this cargo
+        if (cargoId !== null) {
+          const checkQuery = `
+            SELECT id FROM customer_support_request
+            WHERE cargo_id = $1 AND deleted_at IS NULL
+            LIMIT 1
+          `;
+          const existing = await client.query(checkQuery, [cargoId]);
+          if (existing.rows.length > 0) {
+            throw new Error(
+              `An active support request already exists for cargo ${cargoId}`,
+            );
+          }
+        }
+
         const insertQuery = `
           INSERT INTO customer_support_request (
             customer_id, cargo_id, request_type, subject, description,

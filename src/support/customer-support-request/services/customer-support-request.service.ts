@@ -131,17 +131,39 @@ export class CustomerSupportRequestService {
   async create(
     createDto: CreateCustomerSupportRequestDto,
   ): Promise<CustomerSupportRequestResponseDto> {
-    const entity = await this.customerSupportRequestRepository.create(
-      createDto.customerId,
-      createDto.cargoId ?? null,
-      createDto.requestType,
-      createDto.subject ?? null,
-      createDto.description,
-      createDto.priority ?? SupportRequestPriority.MEDIUM,
-      createDto.status ?? SupportRequestStatus.OPEN,
-      createDto.assignedTo ?? null,
-    );
-    return this.mapToDto(entity);
+    try {
+      const entity = await this.customerSupportRequestRepository.create(
+        createDto.customerId,
+        createDto.cargoId ?? null,
+        createDto.requestType,
+        createDto.subject ?? null,
+        createDto.description,
+        createDto.priority ?? SupportRequestPriority.MEDIUM,
+        createDto.status ?? SupportRequestStatus.OPEN,
+        createDto.assignedTo ?? null,
+      );
+      return this.mapToDto(entity);
+    } catch (error: unknown) {
+      // Migration 014: Handle unique constraint violation on cargo_id
+      if (
+        error instanceof Error &&
+        error.message.includes('An active support request already exists')
+      ) {
+        throw new BadRequestException(error.message);
+      }
+      // Re-throw database constraint violations
+      if (
+        error instanceof Error &&
+        (error.message.includes('unique') ||
+          error.message.includes('duplicate') ||
+          error.message.includes('idx_customer_support_request_unique_cargo'))
+      ) {
+        throw new BadRequestException(
+          `An active support request already exists for cargo ${createDto.cargoId}`,
+        );
+      }
+      throw error;
+    }
   }
 
   async update(

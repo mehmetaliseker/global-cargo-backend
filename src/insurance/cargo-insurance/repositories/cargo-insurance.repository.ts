@@ -136,48 +136,7 @@ export class CargoInsuranceRepository
     );
   }
 
-  async update(
-    id: number,
-    insuredValue: number,
-    premiumAmount: number,
-    coverageType: string | null,
-    policyData: Record<string, unknown> | null,
-    expiryDate: Date | null,
-    isActive: boolean,
-  ): Promise<CargoInsuranceEntity> {
-    return await this.databaseService.transaction(
-      async (client: PoolClient): Promise<CargoInsuranceEntity> => {
-        const updateQuery = `
-          UPDATE cargo_insurance
-          SET insured_value = $2,
-              premium_amount = $3,
-              coverage_type = $4,
-              policy_data = $5,
-              expiry_date = $6,
-              is_active = $7
-          WHERE id = $1
-          RETURNING id, cargo_id, insurance_policy_number, insured_value, premium_amount,
-                    currency_id, coverage_type, policy_data, issue_date, expiry_date,
-                    is_active, created_at
-        `;
-        const result = await client.query<CargoInsuranceEntity>(
-          updateQuery,
-          [
-            id,
-            insuredValue,
-            premiumAmount,
-            coverageType,
-            policyData ? JSON.stringify(policyData) : null,
-            expiryDate,
-            isActive,
-          ],
-        );
-        if (result.rows.length === 0) {
-          throw new Error(`Cargo insurance with id ${id} not found`);
-        }
-        return result.rows[0];
-      },
-    );
-  }
+  // Migration 014: UPDATE operation disabled via database trigger
+  // update method removed - cargo_insurance records are immutable
 }
 

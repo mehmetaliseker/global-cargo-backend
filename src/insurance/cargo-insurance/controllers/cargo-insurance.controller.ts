@@ -2,7 +2,6 @@ import {
   Controller,
   Get,
   Post,
-  Put,
   Param,
   Body,
   Query,
@@ -14,8 +13,6 @@ import { CargoInsuranceService } from '../services/cargo-insurance.service';
 import {
   CargoInsuranceResponseDto,
   CreateCargoInsuranceDto,
-  UpdateCargoInsuranceDto,
-  ActivateCargoInsuranceDto,
 } from '../dto/cargo-insurance.dto';
 
 @Controller('insurance/cargo')
@@ -71,20 +68,9 @@ export class CargoInsuranceController {
     return await this.cargoInsuranceService.create(createDto);
   }
 
-  @Put(':id')
-  async update(
-    @Param('id', ParseIntPipe) id: number,
-    @Body() updateDto: UpdateCargoInsuranceDto,
-  ): Promise<CargoInsuranceResponseDto> {
-    return await this.cargoInsuranceService.update(id, updateDto);
-  }
-
-  @Put(':id/activate')
-  async activate(
-    @Param('id', ParseIntPipe) id: number,
-    @Body() activateDto: ActivateCargoInsuranceDto,
-  ): Promise<CargoInsuranceResponseDto> {
-    return await this.cargoInsuranceService.activate(id, activateDto);
-  }
+  // Migration 014: UPDATE and ACTIVATE operations disabled
+  // cargo_insurance records are immutable per database trigger constraints
+  // @Put(':id') endpoint removed
+  // @Put(':id/activate') endpoint removed
 }
 

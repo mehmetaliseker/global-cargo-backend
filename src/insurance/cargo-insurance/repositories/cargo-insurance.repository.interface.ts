@@ -31,14 +31,7 @@ export interface ICargoInsuranceRepository {
     issueDate: Date,
     expiryDate: Date | null,
   ): Promise<CargoInsuranceEntity>;
-  update(
-    id: number,
-    insuredValue: number,
-    premiumAmount: number,
-    coverageType: string | null,
-    policyData: Record<string, unknown> | null,
-    expiryDate: Date | null,
-    isActive: boolean,
-  ): Promise<CargoInsuranceEntity>;
+  // Migration 014: UPDATE operation disabled via database trigger
+  // update method removed - cargo_insurance records are immutable
 }
 

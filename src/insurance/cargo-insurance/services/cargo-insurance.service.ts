@@ -7,8 +7,6 @@ import { CargoInsuranceRepository } from '../repositories/cargo-insurance.reposi
 import {
   CargoInsuranceResponseDto,
   CreateCargoInsuranceDto,
-  UpdateCargoInsuranceDto,
-  ActivateCargoInsuranceDto,
 } from '../dto/cargo-insurance.dto';
 import { CargoInsuranceEntity } from '../repositories/cargo-insurance.repository.interface';
 
@@ -139,66 +137,20 @@ export class CargoInsuranceService {
     id: number,
     updateDto: UpdateCargoInsuranceDto,
   ): Promise<CargoInsuranceResponseDto> {
-    const existing = await this.cargoInsuranceRepository.findById(id);
-    if (!existing) {
-      throw new NotFoundException(`Cargo insurance with id ${id} not found`);
-    }
-
-    if (existing.is_active && !updateDto.isActive) {
-      throw new BadRequestException(
-        'Cannot deactivate active insurance. Use activate endpoint to change status.',
-      );
-    }
-
-    if (updateDto.expiryDate && existing.issue_date) {
-      const expiry = new Date(updateDto.expiryDate);
-      const issue = new Date(existing.issue_date);
-      if (expiry < issue) {
-        throw new BadRequestException(
-          'Expiry date cannot be before issue date',
-        );
-      }
-    }
-
-    const entity = await this.cargoInsuranceRepository.update(
-      id,
-      updateDto.insuredValue,
-      updateDto.premiumAmount,
-      updateDto.coverageType ?? null,
-      updateDto.policyData ?? null,
-      updateDto.expiryDate ? new Date(updateDto.expiryDate) : null,
-      updateDto.isActive,
+    // Migration 014: cargo_insurance tablosunda UPDATE işlemi trigger ile engellenmiştir
+    throw new BadRequestException(
+      'Update operation is not allowed on cargo insurance records. Insurance records are immutable.',
     );
-
-    return this.mapToDto(entity);
   }
 
   async activate(
     id: number,
     activateDto: ActivateCargoInsuranceDto,
   ): Promise<CargoInsuranceResponseDto> {
-    const existing = await this.cargoInsuranceRepository.findById(id);
-    if (!existing) {
-      throw new NotFoundException(`Cargo insurance with id ${id} not found`);
-    }
-
-    if (existing.is_active === activateDto.isActive) {
-      throw new BadRequestException(
-        `Insurance is already ${activateDto.isActive ? 'active' : 'inactive'}`,
-      );
-    }
-
-    const entity = await this.cargoInsuranceRepository.update(
-      id,
-      existing.insured_value,
-      existing.premium_amount,
-      existing.coverage_type ?? null,
-      existing.policy_data as Record<string, unknown> | null,
-      existing.expiry_date ?? null,
-      activateDto.isActive,
+    // Migration 014: cargo_insurance tablosunda UPDATE işlemi trigger ile engellenmiştir
+    throw new BadRequestException(
+      'Activate/deactivate operation is not allowed on cargo insurance records. Insurance records are immutable.',
     );
-
-    return this.mapToDto(entity);
   }
 }
 

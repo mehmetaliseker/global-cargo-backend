@@ -47,6 +47,8 @@ import { HrModule } from './hr/hr.module';
 import { IntegrationModule } from './integration/integration.module';
 import { SupportModule } from './support/support.module';
 import { AuditModule } from './audit/audit.module';
+import { SystemModule } from './system/system.module';
+import { NotificationModule } from './notification/notification.module';
 
 @Module({
   imports: [
@@ -99,6 +101,8 @@ import { AuditModule } from './audit/audit.module';
     IntegrationModule,
     SupportModule,
     AuditModule,
+    SystemModule,
+    NotificationModule,
   ],
   controllers: [AppController],
   providers: [AppService],
