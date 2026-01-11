@@ -4,6 +4,7 @@ import {
   ConflictException,
   BadRequestException,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { createCipheriv, randomBytes, scrypt } from 'crypto';
 import { promisify } from 'util';
 import { PartnerConfigRepository } from '../repositories/partner-config.repository';
@@ -16,21 +17,28 @@ const scryptAsync = promisify(scrypt);
 
 @Injectable()
 export class PartnerConfigService {
-  private readonly encryptionKey: Buffer;
+  private encryptionKey: Buffer | null = null;
 
   constructor(
     private readonly partnerConfigRepository: PartnerConfigRepository,
-  ) {
-    const keyFromEnv = process.env.API_KEY_ENCRYPTION_KEY;
-    if (!keyFromEnv) {
-      throw new Error('API_KEY_ENCRYPTION_KEY environment variable is required');
+    private readonly configService: ConfigService,
+  ) {}
+
+  private getEncryptionKey(): Buffer {
+    if (!this.encryptionKey) {
+      const keyFromEnv = this.configService.get<string>('API_KEY_ENCRYPTION_KEY');
+      if (!keyFromEnv) {
+        throw new Error('API_KEY_ENCRYPTION_KEY environment variable is required');
+      }
+      this.encryptionKey = Buffer.from(keyFromEnv, 'hex');
     }
-    this.encryptionKey = Buffer.from(keyFromEnv, 'hex');
+    return this.encryptionKey;
   }
 
   private async encryptApiKey(apiKey: string): Promise<Buffer> {
+    const encryptionKey = this.getEncryptionKey();
     const iv = randomBytes(16);
-    const key = (await scryptAsync(this.encryptionKey, 'salt', 32)) as Buffer;
+    const key = (await scryptAsync(encryptionKey, 'salt', 32)) as Buffer;
     const cipher = createCipheriv('aes-256-cbc', key, iv);
     const encrypted = Buffer.concat([
       cipher.update(apiKey, 'utf8'),
